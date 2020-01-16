@@ -4,14 +4,15 @@ using System.Net.Http;
 
 namespace StandaloneWalletGenerator
 {
-        public class RandomOrgEntropyService
-        {
-            private readonly HttpClient _client = new HttpClient();
-            private const string RemoteUrl = "https://www.random.org/integers/";
+    public class RandomOrgEntropyService
+    {
+        private const string RemoteUrl = "https://www.random.org/integers/";
 
-            public byte[] GetRandomBytes(int numberOfBytes)
-            {
-                return _client.GetStringAsync(Uri(
+        public static byte[] GetRandomBytes(int numberOfBytes)
+        {
+            return new HttpClient()
+                .GetStringAsync(
+                    Uri(
                         RemoteUrl,
                         new Dictionary<string, string>
                         {
@@ -23,27 +24,27 @@ namespace StandaloneWalletGenerator
                             {"format", "plain"},
                             {"rnd", "new"},
                         }
-                    )).GetAwaiter().GetResult()
-                    .TrimEnd()
-                    .Split("\n")
-                    .Select(number =>
-                    {
-                        byte.TryParse(number, out var b);
-                        return b;
-                    })
-                    .ToArray();
-            }
-
-            private static string Uri(string remoteUrl, IDictionary<string, string> parameters)
-            {
-                var uri = $"{remoteUrl}?";
-                uri = parameters.Aggregate(
-                    uri,
-                    (current, keyValuePair) => keyValuePair.Value != null && !keyValuePair.Value.Equals("")
-                        ? current + $"{keyValuePair.Key}={keyValuePair.Value}&"
-                        : current
-                );
-                return uri.Substring(0, uri.Length - 1);
-            }
+                    )
+                ).GetAwaiter().GetResult()
+                .TrimEnd()
+                .Split("\n")
+                .Select(number =>
+                {
+                    byte.TryParse(number, out var b);
+                    return b;
+                })
+                .ToArray();
         }
+
+        private static string Uri(string remoteUrl, IDictionary<string, string> parameters)
+        {
+            var uri = parameters.Aggregate(
+                $"{remoteUrl}?",
+                (current, keyValuePair) => keyValuePair.Value != null && !keyValuePair.Value.Equals("")
+                    ? current + $"{keyValuePair.Key}={keyValuePair.Value}&"
+                    : current
+            );
+            return uri.Substring(0, uri.Length - 1);
+        }
+    }
 }

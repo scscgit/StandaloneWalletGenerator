@@ -15,6 +15,13 @@ namespace StandaloneWalletGenerator
             comboBox1.SelectedIndex = 0;
         }
 
+        private static string BytesToBinaryString(byte[] bytes)
+        {
+            return bytes.ToList()
+                .Select(b => Convert.ToString(b, 2).PadLeft(8, '0'))
+                .Aggregate((a, b) => a + b);
+        }
+
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
             ChangedBits();
@@ -57,13 +64,13 @@ namespace StandaloneWalletGenerator
                 return;
             }
 
+            // Visualize the process as it isn't instant
+            textBox1.Text = "";
             try
             {
-                textBox1.Text =
-                    new RandomOrgEntropyService().GetRandomBytes(_bits / 8)
-                        .ToList()
-                        .Select(b => Convert.ToString(b, 2).PadLeft(8, '0'))
-                        .Aggregate((a, b) => a + b);
+                textBox1.Text = BytesToBinaryString(
+                    RandomOrgEntropyService.GetRandomBytes(_bits / 8)
+                );
             }
             catch (Exception ex)
             {
@@ -95,11 +102,10 @@ namespace StandaloneWalletGenerator
                 return;
             }
 
-            var bytes = new byte[_bits / 8];
-            new Random().NextBytes(bytes);
-            textBox2.Text = bytes.ToList()
-                .Select(b => Convert.ToString(b, 2).PadLeft(8, '0'))
-                .Aggregate((a, b) => a + b);
+            textBox2.Text = "";
+            textBox2.Text = BytesToBinaryString(
+                LocalEntropyService.GetRandomBytes(_bits / 8)
+            );
         }
 
         private void button7_Click(object sender, EventArgs e)
@@ -123,9 +129,9 @@ namespace StandaloneWalletGenerator
                 return;
             }
 
+            textBox4result.Text = "";
             try
             {
-                textBox4result.Text = "";
                 for (var i = 0; i < _bits; i++)
                 {
                     var add = int.Parse(textBox1.Text[i].ToString())
@@ -142,7 +148,10 @@ namespace StandaloneWalletGenerator
 
         private void richTextBox1_LinkClicked(object sender, LinkClickedEventArgs e)
         {
-            Process.Start("explorer.exe", e.LinkText);
+            if (DialogResult.OK == MessageBox.Show($"Opening link {e.LinkText}", "Confirm", MessageBoxButtons.OKCancel))
+            {
+                Process.Start("explorer.exe", e.LinkText);
+            }
         }
     }
 }
